@@ -8,7 +8,10 @@ const connectDB = require('./config/db');
 connectDB();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: ['https://job-portal-green-seven-31.vercel.app', 'http://localhost:3000'],
+  credentials: true
+}));
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
