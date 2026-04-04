@@ -9,7 +9,12 @@ connectDB();
 
 const app = express();
 app.use(cors({
-  origin: ['https://job-portal-green-seven-31.vercel.app', 'http://localhost:3000'],
+  origin: [
+    'https://sweet-centaur-b993e3.netlify.app',
+    'https://job-portal-green-seven-31.vercel.app',
+    'https://job-portal-ashy-six.vercel.app',
+    'http://localhost:3000'
+  ],
   credentials: true
 }));
 app.use(express.json());
