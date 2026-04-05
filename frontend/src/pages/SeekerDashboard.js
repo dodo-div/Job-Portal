@@ -49,6 +49,11 @@ const SeekerDashboard = () => {
           <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px' }}>
             Welcome, <span style={{ color: '#ff6b35', fontWeight: '600' }}>{user?.name}</span>
           </span>
+
+          <button onClick={() => navigate('/seeker/find-contacts')}
+  style={{ padding: '8px 16px', background: '#6f42c1', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: '4px', fontSize: '13px', fontWeight: '600' }}>
+  Find Contacts
+</button>
           <button onClick={() => navigate('/jobs')}
             style={{ padding: '7px 16px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', cursor: 'pointer', color: '#fff', fontSize: '13px' }}>
             Browse Jobs
@@ -97,7 +102,7 @@ const SeekerDashboard = () => {
             ))
           ) : applications.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>í³‹</div>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>ï¿½ï¿½ï¿½</div>
               <h3 style={{ color: '#1c1c2e', marginBottom: '8px' }}>No applications yet</h3>
               <p style={{ color: '#888', marginBottom: '20px' }}>Start applying to jobs to track them here</p>
               <button onClick={() => navigate('/jobs')}
@@ -113,7 +118,7 @@ const SeekerDashboard = () => {
                     {app.jobId?.title}
                   </h4>
                   <p style={{ margin: '0 0 6px', color: '#666', fontSize: '13px' }}>
-                    {app.jobId?.companyName} â€¢ {app.jobId?.location} â€¢ Rs.{app.jobId?.salary?.toLocaleString()}
+                    {app.jobId?.companyName} â€¢ {app.jobId?.location} â€¢Rs.{app.jobId?.salary?.toLocaleString('en-IN')}
                   </p>
                   <p style={{ margin: 0, color: '#aaa', fontSize: '12px' }}>
                     Applied {new Date(app.appliedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}

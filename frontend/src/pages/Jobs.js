@@ -3,6 +3,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import API from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
+const formatIndianSalary = (num) => {
+  if (!num) return '';
+  return num.toLocaleString('en-IN');
+};
+
 const Jobs = () => {
   const [jobs, setJobs] = useState([]);
   const [search, setSearch] = useState('');
@@ -12,7 +17,7 @@ const Jobs = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => { fetchJobs(); }, []);
+  useEffect(() => { fetchJobs(); }, []); // eslint-disable-line
 
   const fetchJobs = async () => {
     try {
@@ -35,8 +40,6 @@ const Jobs = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f5f7fa', fontFamily: "'Segoe UI', sans-serif" }}>
-
-      {/* Navbar */}
       <nav style={{ background: '#fff', borderBottom: '1px solid #eee', padding: '0 40px', height: '60px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
           <div style={{ background: '#1c1c2e', color: '#fff', width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '14px' }}>J</div>
@@ -63,7 +66,6 @@ const Jobs = () => {
         </div>
       </nav>
 
-      {/* Search Hero */}
       <div style={{ background: 'linear-gradient(135deg, #1c1c2e, #2d2d44)', padding: '48px 40px', textAlign: 'center' }}>
         <h1 style={{ color: '#fff', fontSize: '32px', fontWeight: '800', margin: '0 0 8px' }}>
           Find Your Next <span style={{ color: '#ff6b35' }}>Opportunity</span>
@@ -72,35 +74,22 @@ const Jobs = () => {
           {jobs.length} jobs available right now
         </p>
         <div style={{ maxWidth: '700px', margin: '0 auto', display: 'flex', gap: '8px', background: '#fff', padding: '6px', borderRadius: '12px', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
-          <input value={search} onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && fetchJobs()}
-            placeholder="Job title or keyword..."
-            style={{ flex: 1, padding: '11px 14px', border: 'none', outline: 'none', fontSize: '14px', borderRadius: '8px' }} />
-          <input value={location} onChange={(e) => setLocation(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && fetchJobs()}
-            placeholder="Location..."
-            style={{ flex: 1, padding: '11px 14px', border: 'none', borderLeft: '1px solid #eee', outline: 'none', fontSize: '14px' }} />
-          <select value={jobType} onChange={(e) => setJobType(e.target.value)}
-            style={{ padding: '11px 14px', border: 'none', borderLeft: '1px solid #eee', outline: 'none', fontSize: '14px', color: '#666', background: 'transparent' }}>
+          <input value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && fetchJobs()} placeholder="Job title or keyword..." style={{ flex: 1, padding: '11px 14px', border: 'none', outline: 'none', fontSize: '14px', borderRadius: '8px' }} />
+          <input value={location} onChange={(e) => setLocation(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && fetchJobs()} placeholder="Location..." style={{ flex: 1, padding: '11px 14px', border: 'none', borderLeft: '1px solid #eee', outline: 'none', fontSize: '14px' }} />
+          <select value={jobType} onChange={(e) => setJobType(e.target.value)} style={{ padding: '11px 14px', border: 'none', borderLeft: '1px solid #eee', outline: 'none', fontSize: '14px', color: '#666', background: 'transparent' }}>
             <option value="">All Types</option>
             <option value="full-time">Full Time</option>
             <option value="part-time">Part Time</option>
             <option value="internship">Internship</option>
             <option value="contract">Contract</option>
           </select>
-          <button onClick={fetchJobs}
-            style={{ padding: '11px 24px', background: '#ff6b35', border: 'none', borderRadius: '8px', cursor: 'pointer', color: '#fff', fontWeight: '700', fontSize: '14px', whiteSpace: 'nowrap' }}>
-            Search
-          </button>
+          <button onClick={fetchJobs} style={{ padding: '11px 24px', background: '#ff6b35', border: 'none', borderRadius: '8px', cursor: 'pointer', color: '#fff', fontWeight: '700', fontSize: '14px', whiteSpace: 'nowrap' }}>Search</button>
         </div>
       </div>
 
-      {/* Jobs List */}
       <div style={{ maxWidth: '800px', margin: '32px auto', padding: '0 24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <p style={{ color: '#666', fontSize: '14px', margin: 0 }}>
-            Showing <strong>{jobs.length}</strong> jobs
-          </p>
+          <p style={{ color: '#666', fontSize: '14px', margin: 0 }}>Showing <strong>{jobs.length}</strong> jobs</p>
         </div>
 
         {loading ? (
@@ -112,7 +101,7 @@ const Jobs = () => {
           ))
         ) : jobs.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>í²¼</div>
+            <p style={{ fontSize: '48px', marginBottom: '16px' }}>--</p>
             <h3 style={{ color: '#1c1c2e' }}>No jobs found</h3>
             <p style={{ color: '#888' }}>Try different keywords or clear filters</p>
           </div>
@@ -123,24 +112,15 @@ const Jobs = () => {
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
                     <h3 style={{ margin: 0, fontSize: '17px', fontWeight: '700', color: '#1c1c2e' }}>{job.title}</h3>
-                    <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: '600', background: jobTypeColors[job.jobType]?.bg || '#f5f5f5', color: jobTypeColors[job.jobType]?.color || '#666' }}>
-                      {job.jobType}
-                    </span>
+                    <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: '600', background: jobTypeColors[job.jobType]?.bg || '#f5f5f5', color: jobTypeColors[job.jobType]?.color || '#666' }}>{job.jobType}</span>
                   </div>
-                  <p style={{ margin: '0 0 10px', color: '#666', fontSize: '14px' }}>
-                    {job.companyName} &nbsp;â€¢&nbsp; {job.location}
-                  </p>
+                  <p style={{ margin: '0 0 10px', color: '#666', fontSize: '14px' }}>{job.companyName} &nbsp;â€¢&nbsp; {job.location}</p>
                   <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: '#888' }}>
-                    <span>Rs. {job.salary?.toLocaleString()}/yr</span>
-                    {job.skillsRequired?.length > 0 && (
-                      <span>{job.skillsRequired.slice(0, 3).join(', ')}</span>
-                    )}
+                    <span>Rs. {formatIndianSalary(job.salary)}/yr</span>
+                    {job.skillsRequired?.length > 0 && <span>{job.skillsRequired.slice(0, 3).join(', ')}</span>}
                   </div>
                 </div>
-                <button onClick={() => navigate('/jobs/' + job._id)}
-                  style={{ padding: '9px 20px', background: '#1c1c2e', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '13px', whiteSpace: 'nowrap', marginLeft: '16px' }}>
-                  View Details
-                </button>
+                <button onClick={() => navigate('/jobs/' + job._id)} style={{ padding: '9px 20px', background: '#1c1c2e', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '13px', whiteSpace: 'nowrap', marginLeft: '16px' }}>View Details</button>
               </div>
             </div>
           ))

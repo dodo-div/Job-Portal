@@ -1,4 +1,4 @@
-// v3
+// v4
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Landing from './pages/Landing';
@@ -9,6 +9,7 @@ import JobDetail from './pages/JobDetail';
 import EmployerDashboard from './pages/EmployerDashboard';
 import SeekerDashboard from './pages/SeekerDashboard';
 import FindCandidates from './pages/FindCandidates';
+import FindContacts from './pages/FindContacts';
 import AdminDashboard from './pages/AdminDashboard';
 import Applicants from './pages/Applicants';
 
@@ -31,6 +32,9 @@ const App = () => {
           <Route path="/jobs/:id" element={<JobDetail />} />
           <Route path="/seeker/dashboard" element={
             <PrivateRoute roles={['seeker']}><SeekerDashboard /></PrivateRoute>
+          } />
+          <Route path="/seeker/find-contacts" element={
+            <PrivateRoute roles={['seeker']}><FindContacts /></PrivateRoute>
           } />
           <Route path="/employer/dashboard" element={
             <PrivateRoute roles={['employer']}><EmployerDashboard /></PrivateRoute>
