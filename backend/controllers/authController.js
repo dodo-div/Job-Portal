@@ -1,41 +1,56 @@
-const User = require('../models/User');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+const { HttpError } = require('../middleware/errors');
+const { body, choice, invalid, string } = require('../middleware/validation');
 
-const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+const dummyHash = bcrypt.hashSync('unused-password', 10);
 
-const registerUser = async (req, res) => {
-  try {
-    const { name, email, password, role, companyName } = req.body;
-    const userExists = await User.findOne({ email });
-    if (userExists) return res.status(400).json({ message: 'User already exists' });
-    const user = await User.create({ name, email, password, role: role || 'seeker', companyName: role === 'employer' ? companyName : '' });
-    res.status(201).json({ _id: user._id, name: user.name, email: user.email, role: user.role, token: generateToken(user._id) });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+function credentials(input, registering = false) {
+  const email = string(input.email, 'email', 254).toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw invalid('email');
+  const { password } = input;
+  // Bcrypt truncates at 72 bytes. Keep legacy login behavior for existing passwords.
+  if (typeof password !== 'string' || !password || Buffer.byteLength(password) > (registering ? 72 : 1024)) {
+    throw invalid('password');
   }
-};
+  if (registering && password.length < 6) throw new HttpError(400, 'Password must be at least 6 characters');
+  return { email, password };
+}
 
-const loginUser = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email });
-    if (user && (await user.matchPassword(password))) {
-      res.json({ _id: user._id, name: user.name, email: user.email, role: user.role, token: generateToken(user._id) });
-    } else {
-      res.status(401).json({ message: 'Invalid email or password' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
+function sessionResponse(user, req) {
+  const { _id, name, email, role } = user;
+  const token = jwt.sign({ id: _id }, req.app.locals.config.jwtSecret, { algorithm: 'HS256', expiresIn: '7d' });
+  return { _id, name, email, role, token };
+}
 
-const getMe = async (req, res) => {
+async function registerUser(req, res) {
+  const input = body(req);
+  const { email, password } = credentials(input, true);
+  const name = string(input.name, 'name', 100);
+  const role = choice(input.role === undefined ? 'seeker' : input.role, 'role', ['seeker', 'employer']);
+  const companyName = role === 'employer'
+    ? string(input.companyName, 'company name', 150, { optional: true, empty: true })
+    : undefined;
   try {
-    const user = await User.findById(req.user._id).select('-password');
-    res.json(user);
+    const user = await User.create({ name, email, password, role, companyName });
+    res.status(201).json(sessionResponse(user, req));
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    if (error.code === 11000) throw new HttpError(409, 'User already exists');
+    throw error;
   }
-};
+}
+
+async function loginUser(req, res) {
+  const { email, password } = credentials(body(req));
+  const user = await User.findOne({ email }).select('+password');
+  const matches = await bcrypt.compare(password, user?.password || dummyHash);
+  if (!user || !matches) throw new HttpError(401, 'Invalid email or password');
+  res.json(sessionResponse(user, req));
+}
+
+function getMe(req, res) {
+  res.json(req.user);
+}
 
 module.exports = { registerUser, loginUser, getMe };

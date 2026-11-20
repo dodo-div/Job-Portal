@@ -42,6 +42,33 @@ const Applicants = () => {
     }
   };
 
+  const downloadResume = async (applicationId) => {
+    setMessage('');
+    try {
+      const { data } = await API.get('/applications/' + applicationId + '/resume', { responseType: 'blob' });
+      const url = URL.createObjectURL(data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'resume.pdf';
+      try {
+        document.body.appendChild(link);
+        link.click();
+      } finally {
+        link.remove();
+        // Let the browser start the download before releasing the object URL.
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+    } catch (err) {
+      const errors = {
+        401: 'Your session has expired. Please sign in again.',
+        403: 'You do not have access to this resume.',
+        404: 'This resume is no longer available.',
+        429: 'Too many download attempts. Please try again later.',
+      };
+      setMessage(errors[err.response?.status] || 'Could not download the resume. Please try again.');
+    }
+  };
+
   const statusConfig = {
     applied:     { bg: '#fff3e0', color: '#e65100', label: 'Applied' },
     shortlisted: { bg: '#e8f5e9', color: '#2e7d32', label: 'Shortlisted' },
@@ -107,7 +134,7 @@ const Applicants = () => {
 
         {/* Message */}
         {message && (
-          <div style={{ padding: '12px 16px', background: '#e8f5e9', border: '1px solid #a8d5b5', borderRadius: '8px', color: '#2e7d32', marginBottom: '20px', fontSize: '14px', display: 'flex', justifyContent: 'space-between' }}>
+          <div role="status" style={{ padding: '12px 16px', background: '#e8f5e9', border: '1px solid #a8d5b5', borderRadius: '8px', color: '#2e7d32', marginBottom: '20px', fontSize: '14px', display: 'flex', justifyContent: 'space-between' }}>
             {message}
             <span onClick={() => setMessage('')} style={{ cursor: 'pointer' }}>x</span>
           </div>
@@ -160,10 +187,10 @@ const Applicants = () => {
                     <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: '#aaa', marginTop: '8px' }}>
                       <span>Applied {new Date(app.appliedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                       {app.resume && (
-                        <a href={'http://localhost:5000/uploads/' + app.resume} target="_blank" rel="noreferrer"
-                          style={{ color: '#1a73e8', textDecoration: 'none', fontWeight: '500' }}>
-                          View Resume
-                        </a>
+                        <button type="button" onClick={() => downloadResume(app._id)}
+                          style={{ color: '#1a73e8', background: 'none', border: 'none', padding: 0, font: 'inherit', fontWeight: '500', cursor: 'pointer' }}>
+                          Download Resume
+                        </button>
                       )}
                     </div>
                   </div>

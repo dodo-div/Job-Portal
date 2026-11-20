@@ -1,37 +1,41 @@
-const path = require('path');
+const path = require('node:path');
+const fs = require('node:fs/promises');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
-const express = require('express');
-const cors = require('cors');
+const mongoose = require('mongoose');
+const createApp = require('./app');
+const getConfig = require('./config/env');
 const connectDB = require('./config/db');
 
-connectDB();
+async function start() {
+  let config;
+  try {
+    config = getConfig();
+  } catch (error) {
+    console.error(error.message);
+    process.exitCode = 1;
+    return;
+  }
 
-const app = express();
-app.use(cors({
-  origin: [
-    'https://sweet-centaur-b993e3.netlify.app',
-    'https://job-portal-green-seven-31.vercel.app',
-    'https://job-portal-ashy-six.vercel.app',
-    'http://localhost:3000'
-  ],
-  credentials: true
-}));
-app.use(express.json());
-app.use('/uploads', express.static('uploads'));
+  try {
+    await fs.mkdir(config.resumeDir, { recursive: true, mode: 0o700 });
+    await fs.access(config.resumeDir, fs.constants.R_OK | fs.constants.W_OK);
+    await connectDB(config.mongoUri);
+    const server = createApp(config).listen(config.port);
+    server.once('listening', () => console.log(`Job Portal API listening on port ${config.port}`));
+    server.once('error', async () => {
+      console.error('Could not listen on the configured port');
+      process.exitCode = 1;
+      await mongoose.disconnect();
+    });
+    for (const signal of ['SIGINT', 'SIGTERM']) {
+      process.once(signal, () => server.close(() => mongoose.disconnect()));
+    }
+  } catch {
+    console.error('Startup failed while preparing private resume storage or MongoDB (connection, topology, or indexes)');
+    process.exitCode = 1;
+    await mongoose.disconnect();
+  }
+}
 
-require('./models/User');
-require('./models/Job');
-require('./models/Application');
-
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/jobs', require('./routes/jobRoutes'));
-app.use('/api/applications', require('./routes/applicationRoutes'));
-app.use('/api/exa', require('./routes/exaRoutes'));
-app.use('/api/upload', require('./routes/uploadRoutes'));
-app.use('/api/admin', require('./routes/adminRoutes'));
-
-app.get('/', (req, res) => res.send('Job Portal API running'));
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+start();

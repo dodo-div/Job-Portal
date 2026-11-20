@@ -1,12 +1,17 @@
-const express = require('express');
-const router = express.Router();
+const { Router } = require('express');
 const { getStats, getAllUsers, getAllJobs, deleteUser, deleteJob } = require('../controllers/adminController');
 const { protect, authorizeRoles } = require('../middleware/authMiddleware');
+const { asyncHandler } = require('../middleware/errors');
+const { validateId } = require('../middleware/validation');
 
-router.get('/stats', protect, authorizeRoles('admin'), getStats);
-router.get('/users', protect, authorizeRoles('admin'), getAllUsers);
-router.get('/jobs', protect, authorizeRoles('admin'), getAllJobs);
-router.delete('/users/:id', protect, authorizeRoles('admin'), deleteUser);
-router.delete('/jobs/:id', protect, authorizeRoles('admin'), deleteJob);
-
-module.exports = router;
+module.exports = function adminRoutes() {
+  const router = Router();
+  router.use(protect, authorizeRoles('admin'));
+  router.param('id', validateId);
+  router.get('/stats', asyncHandler(getStats));
+  router.get('/users', asyncHandler(getAllUsers));
+  router.get('/jobs', asyncHandler(getAllJobs));
+  router.delete('/users/:id', asyncHandler(deleteUser));
+  router.delete('/jobs/:id', asyncHandler(deleteJob));
+  return router;
+};

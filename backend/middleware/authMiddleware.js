@@ -1,30 +1,30 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { HttpError, asyncHandler } = require('./errors');
+const { isObjectId } = require('./validation');
 
-const protect = async (req, res, next) => {
-  let token;
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    try {
-      token = req.headers.authorization.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = await User.findById(decoded.id).select('-password');
-      next();
-    } catch (error) {
-      return res.status(401).json({ message: 'Not authorized, token failed' });
-    }
-  }
-  if (!token) {
-    return res.status(401).json({ message: 'Not authorized, no token' });
-  }
-};
+const protect = asyncHandler(async (req, res, next) => {
+  const match = /^Bearer ([^\s]+)$/i.exec(req.get('Authorization') || '');
+  if (!match) throw new HttpError(401, 'A valid Bearer token is required');
 
-const authorizeRoles = (...roles) => {
-  return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ message: 'Access denied. Role not permitted.' });
-    }
-    next();
-  };
+  let claims;
+  try {
+    claims = jwt.verify(match[1], req.app.locals.config.jwtSecret, { algorithms: ['HS256'] });
+  } catch {
+    throw new HttpError(401, 'Invalid or expired token');
+  }
+  if (!isObjectId(claims?.id) || !Number.isFinite(claims.exp)) {
+    throw new HttpError(401, 'Invalid token');
+  }
+  req.user = await User.findById(claims.id);
+  if (!req.user) throw new HttpError(401, 'Invalid token');
+  next();
+});
+
+const authorizeRoles = (...roles) => (req, res, next) => {
+  if (!req.user) return next(new HttpError(401, 'Authentication required'));
+  if (!roles.includes(req.user.role)) return next(new HttpError(403, 'Access denied. Role not permitted.'));
+  next();
 };
 
 module.exports = { protect, authorizeRoles };

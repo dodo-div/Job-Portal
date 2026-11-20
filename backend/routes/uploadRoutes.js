@@ -1,17 +1,37 @@
-const express = require('express');
-const router = express.Router();
+const { Router } = require('express');
 const multer = require('multer');
-const path = require('path');
-const { uploadResume } = require('../controllers/uploadController');
+const path = require('node:path');
+const { uploadResume, downloadOwnResume } = require('../controllers/uploadController');
 const { protect, authorizeRoles } = require('../middleware/authMiddleware');
+const { HttpError, asyncHandler } = require('../middleware/errors');
+const limit = require('../middleware/limits');
+const { MAX_RESUME_BYTES } = require('../services/resumeStorage');
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => { cb(null, 'uploads/'); },
-  filename: (req, file, cb) => { cb(null, 'resume-' + req.user._id + '-' + Date.now() + path.extname(file.originalname)); },
-});
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_RESUME_BYTES + 1, files: 1, fields: 0, parts: 2 },
+  fileFilter(req, file, done) {
+    if (path.extname(file.originalname).toLowerCase() !== '.pdf' || file.mimetype !== 'application/pdf') {
+      return done(new HttpError(415, 'Only PDF resumes are allowed'));
+    }
+    done(null, true);
+  },
+}).single('resume');
 
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
+function parseUpload(req, res, next) {
+  if (!req.is('multipart/form-data')) return next(new HttpError(415, 'Expected a multipart resume upload'));
+  upload(req, res, error => {
+    if (error && !(error instanceof HttpError) && !(error instanceof multer.MulterError)) {
+      return next(new HttpError(400, 'Malformed resume upload'));
+    }
+    next(error);
+  });
+}
 
-router.post('/resume', protect, authorizeRoles('seeker'), upload.single('resume'), uploadResume);
-
-module.exports = router;
+module.exports = function uploadRoutes() {
+  const router = Router();
+  router.use(protect, authorizeRoles('seeker'));
+  router.post('/resume', limit(60_000, 10), limit(60_000, 5, true), parseUpload, asyncHandler(uploadResume));
+  router.get('/resume', limit(60_000, 30, true), asyncHandler(downloadOwnResume));
+  return router;
+};

@@ -1,14 +1,15 @@
 const mongoose = require('mongoose');
+const User = require('../models/User');
+const Job = require('../models/Job');
+const Application = require('../models/Application');
 
-const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGO_URI);
-
-    console.log(`MongoDB connected: ${conn.connection.host}`);
-  } catch (error) {
-    console.error(`Error: ${error.message}`);
-    process.exit(1);
+async function connectDB(uri) {
+  await mongoose.connect(uri, { serverSelectionTimeoutMS: 5000 });
+  const topology = await mongoose.connection.db.admin().command({ hello: 1 });
+  if (!topology.setName && topology.msg !== 'isdbgrid') {
+    throw new Error('MongoDB must support transactions');
   }
-};
+  await Promise.all([User.init(), Job.init(), Application.init()]);
+}
 
 module.exports = connectDB;

@@ -22,7 +22,7 @@ const Jobs = () => {
   const fetchJobs = async () => {
     try {
       setLoading(true);
-      const { data } = await API.get('/jobs?search=' + search + '&location=' + location + '&jobType=' + jobType);
+      const { data } = await API.get('/jobs', { params: { search, location, jobType } });
       setJobs(data);
     } catch (err) {
       console.error(err);

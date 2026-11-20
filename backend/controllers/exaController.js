@@ -1,31 +1,11 @@
-const axios = require('axios');
+const { body, integer, string } = require('../middleware/validation');
+const searchPeople = require('../services/exa');
 
-const searchPeople = async (req, res) => {
-  try {
-    const { query, numResults = 10 } = req.body;
+async function searchPeopleRoute(req, res) {
+  const input = body(req);
+  const query = string(input.query, 'search query', 500);
+  const numResults = input.numResults === undefined ? 10 : integer(input.numResults, 'numResults', 1, 10);
+  res.json(await searchPeople(req.app.locals.config.exaApiKey, query, numResults));
+}
 
-    if (!query) return res.status(400).json({ message: 'Search query is required' });
-
-    const response = await axios.post(
-      'https://api.exa.ai/search',
-      {
-        query,
-        category: 'people',
-        type: 'auto',
-        numResults,
-      },
-      {
-        headers: {
-          'x-api-key': process.env.EXA_API_KEY,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-
-    res.json(response.data.results);
-  } catch (error) {
-    res.status(500).json({ message: error.response?.data?.message || error.message });
-  }
-};
-
-module.exports = { searchPeople };
+module.exports = searchPeopleRoute;
