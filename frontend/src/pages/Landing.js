@@ -1,140 +1,80 @@
-import { useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useEffect } from 'react';
+import { dashboards } from '../components/Layout';
+import { DataState, Field } from '../components/ui';
+import { JobCard, jobTypes } from '../components/jobs';
+import useData from '../hooks/useData';
+import API from '../services/api';
 
-const Landing = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
+const loadRecentJobs = signal => API.get('/jobs', { signal, params: { limit: 3 } }).then(response => response.data);
 
-  useEffect(() => {
-    if (user) {
-      if (user.role === 'admin') navigate('/admin/dashboard');
-      else if (user.role === 'employer') navigate('/employer/dashboard');
-      else navigate('/seeker/dashboard');
-    }
-  }, [user]);
-
-  return (
-    <div style={{ minHeight: '100vh', fontFamily: "'Segoe UI', sans-serif", background: '#fafafa' }}>
-
-      {/* Navbar */}
-      <nav style={{ background: '#fff', borderBottom: '1px solid #eee', padding: '0 60px', height: '64px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ background: '#1c1c2e', color: '#fff', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '16px' }}>J</div>
-          <span style={{ fontWeight: '800', fontSize: '18px', color: '#1c1c2e' }}>JobPortal</span>
-        </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button onClick={() => navigate('/jobs')}
-            style={{ padding: '8px 20px', background: 'transparent', border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', color: '#444' }}>
-            Browse Jobs
-          </button>
-          <button onClick={() => navigate('/login')}
-            style={{ padding: '8px 20px', background: 'transparent', border: '1px solid #1c1c2e', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', color: '#1c1c2e' }}>
-            Login
-          </button>
-          <button onClick={() => navigate('/register')}
-            style={{ padding: '8px 20px', background: '#ff6b35', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '600', color: '#fff' }}>
-            Get Started
-          </button>
-        </div>
-      </nav>
-
-      {/* Hero */}
-      <div style={{ background: 'linear-gradient(135deg, #1c1c2e 0%, #2d2d44 100%)', padding: '100px 60px', textAlign: 'center' }}>
-        <div style={{ display: 'inline-block', background: 'rgba(255,107,53,0.15)', border: '1px solid rgba(255,107,53,0.3)', borderRadius: '20px', padding: '6px 18px', marginBottom: '24px' }}>
-          <span style={{ color: '#ff6b35', fontSize: '13px', fontWeight: '600', letterSpacing: '1px' }}>POWERED BY EXA AI</span>
-        </div>
-        <h1 style={{ color: '#fff', fontSize: '52px', fontWeight: '800', margin: '0 0 20px', lineHeight: '1.2' }}>
-          Find Your Dream Job<br />
-          <span style={{ color: '#ff6b35' }}>or Perfect Candidate</span>
-        </h1>
-        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '18px', margin: '0 0 40px', maxWidth: '560px', marginLeft: 'auto', marginRight: 'auto' }}>
-          The smartest job portal with AI-powered candidate search. Connect seekers with employers seamlessly.
-        </p>
-        <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
-          <button onClick={() => navigate('/register')}
-            style={{ padding: '16px 36px', background: '#ff6b35', border: 'none', borderRadius: '10px', cursor: 'pointer', color: '#fff', fontWeight: '700', fontSize: '16px', boxShadow: '0 8px 24px rgba(255,107,53,0.4)' }}>
-            Get Started Free
-          </button>
-          <button onClick={() => navigate('/jobs')}
-            style={{ padding: '16px 36px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '10px', cursor: 'pointer', color: '#fff', fontWeight: '600', fontSize: '16px' }}>
-            Browse Jobs
-          </button>
-        </div>
-
-        {/* Stats */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '60px', marginTop: '60px' }}>
-          {[['1B+', 'Profiles Indexed'], ['500+', 'Companies'], ['10K+', 'Jobs Posted'], ['98%', 'Match Accuracy']].map(([num, label]) => (
-            <div key={label}>
-              <div style={{ color: '#ff6b35', fontSize: '28px', fontWeight: '800' }}>{num}</div>
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginTop: '4px' }}>{label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Features */}
-      <div style={{ padding: '80px 60px', maxWidth: '1100px', margin: '0 auto' }}>
-        <h2 style={{ textAlign: 'center', fontSize: '32px', fontWeight: '800', color: '#1c1c2e', marginBottom: '12px' }}>
-          Everything You Need
-        </h2>
-        <p style={{ textAlign: 'center', color: '#888', marginBottom: '48px', fontSize: '16px' }}>
-          Built for job seekers and employers alike
-        </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
-          {[
-            { title: 'AI People Search', desc: 'Find exact candidates by role, skills, location using Exa AI with 1B+ indexed profiles.', color: '#ff6b35', icon: 'S' },
-            { title: 'Smart Job Matching', desc: 'Search and filter jobs by title, location, salary and job type in real time.', color: '#1a73e8', icon: 'M' },
-            { title: 'Easy Applications', desc: 'Upload resume and apply in one click. Track all your applications in one place.', color: '#0f9d58', icon: 'A' },
-            { title: 'Employer Dashboard', desc: 'Post jobs, manage listings, view applicants and accept or reject with ease.', color: '#9c27b0', icon: 'D' },
-            { title: 'Role Based Access', desc: 'Separate dashboards for seekers, employers and admins with JWT security.', color: '#f4b400', icon: 'R' },
-            { title: 'Admin Control Panel', desc: 'Full platform oversight — manage users, jobs and monitor all activity.', color: '#e91e63', icon: 'C' },
-          ].map((f) => (
-            <div key={f.title} style={{ background: '#fff', borderRadius: '14px', padding: '28px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', borderTop: `4px solid ${f.color}` }}>
-              <div style={{ width: '44px', height: '44px', background: f.color, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: '800', fontSize: '18px', marginBottom: '16px' }}>
-                {f.icon}
-              </div>
-              <h3 style={{ margin: '0 0 10px', color: '#1c1c2e', fontSize: '16px', fontWeight: '700' }}>{f.title}</h3>
-              <p style={{ margin: 0, color: '#888', fontSize: '14px', lineHeight: '1.6' }}>{f.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* CTA */}
-      <div style={{ background: '#1c1c2e', padding: '80px 60px', textAlign: 'center' }}>
-        <h2 style={{ color: '#fff', fontSize: '36px', fontWeight: '800', margin: '0 0 16px' }}>
-          Ready to Get Started?
-        </h2>
-        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '16px', marginBottom: '36px' }}>
-          Join thousands of seekers and employers already using JobPortal
-        </p>
-        <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
-          <button onClick={() => navigate('/register')}
-            style={{ padding: '14px 32px', background: '#ff6b35', border: 'none', borderRadius: '10px', cursor: 'pointer', color: '#fff', fontWeight: '700', fontSize: '15px' }}>
-            Register as Job Seeker
-          </button>
-          <button onClick={() => navigate('/register')}
-            style={{ padding: '14px 32px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '10px', cursor: 'pointer', color: '#fff', fontWeight: '600', fontSize: '15px' }}>
-            Register as Employer
-          </button>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div style={{ background: '#111', padding: '24px 60px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '13px' }}>2026 JobPortal. Built with MERN Stack + Exa AI.</span>
-        <div style={{ display: 'flex', gap: '24px' }}>
-          {['Browse Jobs', 'Login', 'Register'].map((link) => (
-            <span key={link} onClick={() => navigate('/' + link.toLowerCase().replace(' ', ''))}
-              style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', cursor: 'pointer' }}>
-              {link}
-            </span>
-          ))}
-        </div>
-      </div>
+function RecentJobs() {
+  const jobs = useData(loadRecentJobs, 'Could not load recent jobs.');
+  return <section className="container landing-section" aria-labelledby="recent-jobs">
+    <div className="section-bar landing-section-heading">
+      <h2 id="recent-jobs">Recently posted jobs</h2>
+      <Link className="button button-secondary" to="/jobs">Browse all jobs <span aria-hidden="true">→</span></Link>
     </div>
-  );
-};
+    <DataState {...jobs} retry={jobs.reload} empty={!jobs.data?.length} title="No open roles yet" heading="h3">
+      {jobs.data?.length ? <div className="recent-grid">{jobs.data.map(job => <JobCard key={job._id} job={job} heading="h3" compact />)}</div>
+        : <p className="muted">New listings will appear here when employers publish them.</p>}
+    </DataState>
+  </section>;
+}
 
-export default Landing;
+export default function Landing() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  if (user) return <Navigate to={dashboards[user.role]} replace />;
+
+  function search(event) {
+    event.preventDefault();
+    const params = new URLSearchParams();
+    for (const [key, value] of new FormData(event.currentTarget)) {
+      if (value.trim()) params.set(key, value.trim());
+    }
+    const filters = params.toString();
+    navigate(filters ? '/jobs?' + filters : '/jobs');
+  }
+
+  return <>
+    <section className="landing-hero">
+      <div className="container hero-grid">
+        <div className="hero-copy">
+          <h1>Find work.<br /> <span>Hire with purpose.</span></h1>
+          <p className="hero-description">Find your next role, track every application, and connect with the people you want on your team.</p>
+          <form className="hero-search" onSubmit={search} aria-label="Search jobs">
+            <Field label="Job title"><input name="search" placeholder="e.g. Designer" maxLength={150} /></Field>
+            <Field label="Location"><input name="location" placeholder="e.g. Pune" maxLength={150} /></Field>
+            <button className="button" type="submit">Search jobs</button>
+          </form>
+          <p className="hero-employer">Hiring? <Link to="/register?role=employer">Create an employer account</Link></p>
+        </div>
+        <img className="hero-photo" src={process.env.PUBLIC_URL + '/recruitment-hero.jpg'} alt="Two people in a hiring conversation across an office desk" width="1100" height="1100" fetchPriority="high" />
+      </div>
+    </section>
+    <RecentJobs />
+    <section className="container landing-section" aria-labelledby="work-types">
+      <h2 id="work-types">Browse by work type</h2>
+      <div className="work-types">
+        {jobTypes.map(([type, label]) => <Link className="surface work-type" key={type} to={'/jobs?jobType=' + type}>
+          {label}<span aria-hidden="true">↗</span>
+        </Link>)}
+      </div>
+    </section>
+    <section className="container landing-section audience-grid" aria-label="Account options">
+      <article className="surface audience-card">
+        <p className="eyebrow">FOR JOB SEEKERS</p>
+        <h2>Keep track of every application.</h2>
+        <p>Apply with your PDF resume and follow your progress in one place.</p>
+        <Link className="button button-secondary" to="/register">Create a seeker account</Link>
+      </article>
+      <article className="surface audience-card">
+        <p className="eyebrow">FOR HIRING TEAMS</p>
+        <h2>Manage your hiring in one place.</h2>
+        <p>Post jobs, review resumes, and shortlist candidates from your employer dashboard.</p>
+        <Link className="button button-secondary" to="/register?role=employer">Create an employer account</Link>
+      </article>
+    </section>
+  </>;
+}

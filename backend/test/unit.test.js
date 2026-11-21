@@ -28,7 +28,7 @@ test('validation accepts scalar frontend inputs and PDF signatures', () => {
   assert.equal(isPdf(Buffer.from('%PDF-1.7\ntruncated')), false);
 });
 
-test('Exa reports missing credentials and maps upstream rejection and quota safely', async t => {
+test('Exa uses server configuration for search and handles provider errors safely', async t => {
   await assert.rejects(searchPeople('', 'query', 1), { status: 503 });
   const mockedFetch = t.mock.method(globalThis, 'fetch');
   for (const status of [401, 403, 402, 429, 500]) {
@@ -46,6 +46,18 @@ test('Exa reports missing credentials and maps upstream rejection and quota safe
   const [, options] = mockedFetch.mock.calls[0].arguments;
   assert.equal(options.redirect, 'error');
   assert.equal(JSON.parse(options.body).numResults, 1);
+
+  const profile = { title: 'Example profile', url: 'https://example.test/profile' };
+  mockedFetch.mock.mockImplementationOnce(async () => Response.json({ results: [profile] }));
+  const config = getConfig({ ...valid, EXA_API_KEY: ' fixture ' });
+  assert.deepEqual(await searchPeople(config.exaApiKey, 'developer', 1), [profile]);
+  const [url, searchOptions] = mockedFetch.mock.calls.at(-1).arguments;
+  assert.equal(url, 'https://api.exa.ai/search');
+  assert.equal(searchOptions.method, 'POST');
+  assert.equal(searchOptions.headers['x-api-key'], 'fixture');
+  assert.deepEqual(JSON.parse(searchOptions.body), {
+    query: 'developer', category: 'people', type: 'auto', numResults: 1, contents: { text: false },
+  });
 });
 
 let server;

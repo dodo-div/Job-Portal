@@ -5,7 +5,7 @@
 1. Install Node.js 22 or newer and start a local MongoDB replica set. For example, with MongoDB 8, create an empty data directory and run `mongod --dbpath ./local-mongo-data --bind_ip 127.0.0.1 --port 27017 --replSet rs0` in one terminal. In another, initialize it once with `mongosh --host 127.0.0.1 --port 27017 --eval 'rs.initiate({_id:"rs0",members:[{_id:0,host:"127.0.0.1:27017"}]})'`.
 2. Create an ignored `backend/.env`. Set `MONGO_URI=mongodb://127.0.0.1:27017/job_portal_dev?replicaSet=rs0`. Use `node -p "require('node:crypto').randomBytes(32).toString('hex')"` to generate a local value for `JWT_SECRET`.
 3. From `backend`, run `npm ci` and `npm start`. The default API is `http://localhost:5000/api`. Startup waits for MongoDB and index initialization.
-4. To use the browser UI locally, set `REACT_APP_API_URL=http://localhost:5000/api` in your shell or in `frontend/.env.development.local`. From `frontend`, run `npm ci` and `npm start`.
+4. From `frontend`, run `npm ci` and `npm start`. `.env.development` points the development server at `http://localhost:5000/api`. A shell value or `frontend/.env.development.local` can override `REACT_APP_API_URL`. Restart the development server after changing environment variables.
 
 Public registration provisions seeker and employer accounts. Provision authorized admin accounts through trusted database administration using the User model to hash the password. The integration test demonstrates local admin creation and login.
 
@@ -21,7 +21,7 @@ Public registration provisions seeker and employer accounts. Provision authorize
 
 ## API compatibility
 
-- The frontend uses its existing deployed API URL by default. `REACT_APP_API_URL` overrides it at build time.
+- Production builds use the deployed API URL. Set `REACT_APP_API_URL` in the build environment to override it.
 - The Applicants page uses the existing authenticated Axios client to download the application snapshot as `resume.pdf` from `GET /api/applications/:applicationId/resume`. The `/uploads/:filename` route was removed. A seeker can download their current PDF at `GET /api/upload/resume`.
 - Resume uploads still use the `resume` multipart field. They now require a PDF up to 5 MiB. Applicant records retain the application-level `resume` value. The populated applicant and admin user lists omit the profile's resume filename.
 - Existing list calls still return arrays. Callers may opt in with `page` and `limit` (up to 100) and read the `Link` header. Duplicate email registration and duplicate application attempts return `409`. Invalid values return `400` and rate-limited requests return `429`. Errors retain the `{ message }` shape.

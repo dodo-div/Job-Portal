@@ -194,6 +194,62 @@ test('isolated HTTP and MongoDB workflows', { skip: binary ? false : 'Set MONGOD
       assert.match(check(await post('/api/exa/search-people', owner.token, { query: 'developer' }), 503).message, /EXA_API_KEY/);
     });
 
+    await t.test('every protected API method enforces authentication and allowed roles', async () => {
+      const actors = { seeker, employer: owner, admin };
+      const all = Object.keys(actors);
+      const managers = ['employer', 'admin'];
+      const jobPath = '/api/jobs/' + job._id;
+      const applicationPath = '/api/applications/' + application._id;
+      const routes = [
+        ['GET', '/api/auth/me', all],
+        ['GET', '/api/jobs/employer/myjobs', ['employer']],
+        ['POST', '/api/jobs', managers, fields],
+        ['PUT', jobPath, managers, { title: 'Updated' }],
+        ['DELETE', jobPath, managers],
+        ['POST', '/api/applications/' + job._id, ['seeker'], {}],
+        ['GET', '/api/applications/myapplications', ['seeker']],
+        ['GET', '/api/applications/job/' + job._id, managers],
+        ['PUT', applicationPath + '/status', managers, { status: 'applied' }],
+        ['GET', applicationPath + '/resume', all],
+        ['POST', '/api/upload/resume', ['seeker']],
+        ['GET', '/api/upload/resume', ['seeker']],
+        ['POST', '/api/exa/search-people', managers, { query: 'developer' }],
+        ['GET', '/api/admin/stats', ['admin']],
+        ['GET', '/api/admin/users', ['admin']],
+        ['GET', '/api/admin/jobs', ['admin']],
+        ['DELETE', '/api/admin/users/' + secondSeeker._id, ['admin']],
+        ['DELETE', '/api/admin/jobs/' + otherJob._id, ['admin']],
+      ];
+
+      for (const [method, endpoint, allowed, json] of routes) {
+        const anonymous = await request(endpoint, { method, json });
+        assert.equal(anonymous.status, 401, `Anonymous ${method} ${endpoint}`);
+        for (const [role, actor] of Object.entries(actors)) {
+          if (allowed.includes(role)) continue;
+          const denied = await request(endpoint, { method, json, token: actor.token });
+          assert.equal(denied.status, 403, `${role} ${method} ${endpoint}`);
+        }
+      }
+
+      for (const actor of Object.values(actors)) {
+        const profile = check(await get('/api/auth/me', actor.token), 200);
+        assert.equal(profile._id, actor._id);
+        assert.equal(profile.role, actor.role);
+        assert.equal(Object.hasOwn(profile, 'password'), false);
+      }
+
+      assert.deepEqual(check(await get('/api/jobs/employer/myjobs', outsider.token), 200), []);
+      assert.deepEqual(check(await get('/api/applications/myapplications', secondSeeker.token), 200), []);
+
+      const adminJob = check(await post('/api/jobs', admin.token, fields), 201);
+      assert.equal(adminJob.employerId, admin._id);
+      check(await put(jobPath, admin.token, { title: 'Updated by admin' }), 200);
+      check(await remove('/api/jobs/' + adminJob._id, admin.token), 200);
+
+      const exa = '/api/exa/search-people';
+      assert.match(check(await post(exa, admin.token, { query: 'developer' }), 503).message, /EXA_API_KEY/);
+    });
+
     await t.test('admin reports, transaction cascades, and deleted account sessions', async () => {
       assert.equal(check(await get('/api/admin/stats', admin.token), 200).totalApplications, 1);
       assert.equal(check(await get('/api/admin/users', admin.token), 200).length, 5);

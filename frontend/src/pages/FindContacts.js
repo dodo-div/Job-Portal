@@ -1,11 +1,7 @@
-import { PeopleSearch } from './FindCandidates';
+import PeopleSearch from '../components/PeopleSearch';
+import { useAuth } from '../context/AuthContext';
 
-const FindContacts = () => (
-  <PeopleSearch
-    title="Find the Right Person to Contact"
-    subtitle="Find hiring managers, recruiters and decision makers at top companies."
-    examples={['HR Manager at Google India', 'Recruiter at Zomato', 'Hiring Manager at Razorpay', 'Tech Lead at Flipkart', 'CTO startup Bangalore', 'Engineering Manager at Swiggy']}
-  />
-);
-
-export default FindContacts;
+export default function FindContacts() {
+  const { user } = useAuth();
+  return <PeopleSearch contacts allowed={user.role !== 'seeker'} />;
+}
